@@ -1,0 +1,159 @@
+mkdir recipe-app
+cd recipe-app
+npm init -y
+npm install express
+const express = require('express');
+const app = express();
+const port = 3000;
+
+app.use(express.json());
+app.use(express.static('public'));
+
+let recipes = [
+  {
+    id: 1,
+    title: 'Spaghetti Bolognese',
+    ingredients: ['spaghetti', 'ground beef', 'tomato sauce', 'onions', 'garlic'],
+    instructions: 'Cook the spaghetti, brown the beef, and mix with sauce.'
+  },
+  {
+    id: 2,
+    title: 'Chicken Curry',
+    ingredients: ['chicken', 'curry powder', 'coconut milk', 'rice'],
+    instructions: 'Cook chicken, add curry powder and coconut milk, serve with rice.'
+  }
+];
+
+// Get all recipes
+app.get('/api/recipes', (req, res) => {
+  res.json(recipes);
+});
+
+// Get a single recipe by ID
+app.get('/api/recipes/:id', (req, res) => {
+  const recipe = recipes.find(r => r.id === parseInt(req.params.id));
+  if (recipe) {
+    res.json(recipe);
+  } else {
+    res.status(404).send('Recipe not found');
+  }
+});
+
+// Add a new recipe
+app.post('/api/recipes', (req, res) => {
+  const newRecipe = req.body;
+  recipes.push(newRecipe);
+  res.status(201).json(newRecipe);
+});
+
+// Delete a recipe by ID
+app.delete('/api/recipes/:id', (req, res) => {
+  recipes = recipes.filter(r => r.id !== parseInt(req.params.id));
+  res.status(200).send('Recipe deleted');
+});
+
+app.listen(port, () => {
+  console.log(`Server running at http://localhost:${port}`);
+});
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recipe App</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <h1>Recipe Application</h1>
+
+  <div id="recipes-list">
+    <!-- Recipes will be shown here -->
+  </div>
+
+  <h2>Add a New Recipe</h2>
+  <form id="recipe-form">
+    <input type="text" id="title" placeholder="Recipe Title" required>
+    <input type="text" id="ingredients" placeholder="Ingredients (comma separated)" required>
+    <textarea id="instructions" placeholder="Instructions" required></textarea>
+    <button type="submit">Add Recipe</button>
+  </form>
+
+  <script src="script.js"></script>
+</body>
+</html>
+body {
+  font-family: Arial, sans-serif;
+  padding: 20px;
+  background-color: #f4f4f4;
+}
+
+h1 {
+  color: #333;
+}
+
+#recipes-list {
+  margin-bottom: 20px;
+}
+
+.recipe {
+  border: 1px solid #ddd;
+  padding: 10px;
+  margin-bottom: 10px;
+  background-color: white;
+}
+
+button {
+  padding: 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+const recipeForm = document.getElementById('recipe-form');
+const recipesList = document.getElementById('recipes-list');
+
+const fetchRecipes = async () => {
+  const res = await fetch('/api/recipes');
+  const data = await res.json();
+
+  recipesList.innerHTML = '';
+  data.forEach(recipe => {
+    const recipeElement = document.createElement('div');
+    recipeElement.classList.add('recipe');
+    recipeElement.innerHTML = `
+      <h3>${recipe.title}</h3>
+      <p><strong>Ingredients:</strong> ${recipe.ingredients.join(', ')}</p>
+      <p><strong>Instructions:</strong> ${recipe.instructions}</p>
+    `;
+    recipesList.appendChild(recipeElement);
+  });
+};
+
+// Handle form submission
+recipeForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const title = document.getElementById('title').value;
+  const ingredients = document.getElementById('ingredients').value.split(',').map(item => item.trim());
+  const instructions = document.getElementById('instructions').value;
+
+  const newRecipe = { title, ingredients, instructions };
+
+  await fetch('/api/recipes', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(newRecipe)
+  });
+
+  fetchRecipes();  // Refresh recipe list
+  recipeForm.reset();
+});
+
+fetchRecipes();  // Initial fetch
+node server.js
