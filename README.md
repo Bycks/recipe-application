@@ -1,2 +1,1 @@
-# recipe-application
-homemade recipes
+http://localhost:3000
